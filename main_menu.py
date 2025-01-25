@@ -6,15 +6,13 @@ pygame.init()
 
 WIDTH, HEIGHT = 800, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Космические Баталии")
+pygame.display.set_caption("Космические Войны")
 
 BLACK = (0, 0, 0)
 YELLOW = (255, 255, 0)
 WHITE = (255, 255, 255)
 
-font_path = "font/PressStart2P-vaV7.ttf"
-font_size = 28
-font = pygame.font.Font(font_path, font_size)
+font = pygame.font.Font("font/PressStart2P-vaV7.ttf", 28)
 
 STAR_COUNT = 700
 stars = [
@@ -29,15 +27,18 @@ def display_start_screen(screen, WIDTH, HEIGHT):
     instruction_text = font.render("Нажмите SPACE чтобы начать", True, WHITE)
     screen.fill(BLACK)
 
+    # Отображение звезд
     for star in stars:
         color = YELLOW if random.random() > 0.8 else WHITE
         pygame.draw.rect(screen, color, (star["x"], star["y"], 3, 3))
 
+    # Отображение текста
     screen.blit(title_text, ((WIDTH - title_text.get_width()) // 2, HEIGHT // 3))
     screen.blit(instruction_text, ((WIDTH - instruction_text.get_width()) // 2, HEIGHT // 2 + 50))
 
     pygame.display.flip()
 
+    # Обновление позиции звезд
     for star in stars:
         star["y"] += STAR_SPEED
         if star["y"] > HEIGHT:
@@ -46,10 +47,12 @@ def display_start_screen(screen, WIDTH, HEIGHT):
 
     screen.fill(BLACK)
 
+    # Повторное отображение звезд
     for star in stars:
         color = YELLOW if random.random() > 0.8 else WHITE
         pygame.draw.rect(screen, color, (star["x"], star["y"], 3, 3))
 
+    # Повторное отображение текста
     screen.blit(title_text, ((WIDTH - title_text.get_width()) // 2, HEIGHT // 3))
     screen.blit(instruction_text, ((WIDTH - instruction_text.get_width()) // 2, HEIGHT // 2 + 50))
 
@@ -64,10 +67,11 @@ while waiting:
             pygame.quit()
             sys.exit()
 
+        # Проверка нажатия пробела
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             waiting = False
 
     display_start_screen(screen, WIDTH, HEIGHT)
 
-from game import main
-main()
+import game
+game()
