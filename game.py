@@ -1,11 +1,15 @@
-import pygame
 import random
 import sys
+
+import pygame
+from PIL import Image
+
+from final_screen import draw_final_screen
 
 pygame.init()
 
 # Установка размеров окна
-WIDTH, HEIGHT = 450, 800
+WIDTH, HEIGHT = 550, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Космические Войны")
 font = pygame.font.Font("font/PressStart2P-vaV7.ttf", 18)
@@ -23,6 +27,24 @@ stars = [
 ]
 
 STAR_SPEED = 2
+
+# Обработка гиф
+gif_path = ("sprites/explosion.gif")
+gif = Image.open(gif_path)
+frames = []
+
+explosions = []
+
+try:
+    while True:
+        frame = gif.convert("RGBA")
+        frame_data = frame.tobytes()
+        frame_size = frame.size
+        pygame_frame = pygame.image.fromstring(frame_data, frame_size, "RGBA")
+        frames.append(pygame_frame)
+        gif.seek(gif.tell() + 1)
+except EOFError:
+    pass
 
 
 # Класс корабля
@@ -97,7 +119,7 @@ class Enemy:
 
     def move(self):
         self.rect.y += self.speed
-        self.move_counter += 1
+        self.move_counter += 2
         if self.move_counter % 60 == 0:
             self.direction = random.choice([-1, 1])
         self.rect.x += self.speed * self.direction
@@ -106,7 +128,7 @@ class Enemy:
 
     def shoot(self):
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_shot_time > 3000:
+        if current_time - self.last_shot_time > 1400:
             enemy_lasers.append(Laser(self.rect.centerx, self.rect.bottom, (255, 0, 0)))
             self.last_shot_time = current_time
 
@@ -118,18 +140,18 @@ class Enemy:
 ship = Ship("sprites/ship.png", (60, 60), 5, "sprites/hp.png", max_hp=3)
 
 # Создание врагов
-enemies = [Enemy("sprites/enemies.png", (60, 50), 2) for _ in range(random.randint(1, 2))]
+enemies = [Enemy("sprites/enemies.png", (60, 50), 2) for _ in range(1)]
 
 enemy_lasers = []
 
 
 # Функция спавна врагов
 def spawn_enemy():
-    for _ in range(random.randint(1, 3)):
+    for _ in range(random.randint(1, 2)):
         enemies.append(Enemy("sprites/enemies.png", (60, 50), 2))
 
 
-ENEMY_SPAWN_TIME = 3000
+ENEMY_SPAWN_TIME = 1750
 
 last_enemy_spawn_time = pygame.time.get_ticks()
 
@@ -149,7 +171,20 @@ def shoot_laser():
         last_shot_time = current_time
 
 
+# Функция перезапуска
+def reset_game():
+    global ship, enemies, enemy_lasers, lasers, score, start_time, running
+    ship = Ship("sprites/ship.png", (60, 60), 5, "sprites/hp.png", max_hp=3)
+    enemies = [Enemy("sprites/enemies.png", (60, 50), 2) for _ in range(1)]
+    enemy_lasers = []
+    lasers = []
+    score = 0
+    start_time = pygame.time.get_ticks()
+    running = True
+
+
 clock = pygame.time.Clock()
+
 running = True
 
 while running:
@@ -158,18 +193,21 @@ while running:
             pygame.quit()
             sys.exit()
 
+    # Проверка времени игры
+    elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
+
     # Обработка нажатий клавиш
     keys = pygame.key.get_pressed()
     if keys[pygame.K_SPACE]:
         current_time = pygame.time.get_ticks()
-        if current_time - last_shot_time > 400:
+        if current_time - last_shot_time > 900:
             lasers.append(Laser(ship.rect.centerx, ship.rect.top))
             last_shot_time = current_time
 
     # Спавн врагов
     current_time = pygame.time.get_ticks()
     if current_time - last_enemy_spawn_time > ENEMY_SPAWN_TIME:
-        for _ in range(random.randint(1, 3)):
+        for _ in range(random.randint(1, 2)):
             enemies.append(Enemy("sprites/enemies.png", (60, 50), 2))
         last_enemy_spawn_time = current_time
 
@@ -204,24 +242,39 @@ while running:
     for enemy in enemies[:]:
         enemy.move()
         enemy.shoot()
+
+        # Проверка высоты врага
         if enemy.rect.top > HEIGHT:
             enemies.remove(enemy)
+            continue
+        # Проверка столкновения с врагом
+        if ship.rect.colliderect(enemy.rect):
+            ship.take_damage(1)
+            enemies.remove(enemy)
+            continue
 
+        # Проверка столкновения лазера с врагом
         for laser in lasers[:]:
             if laser.rect.colliderect(enemy.rect):
                 enemies.remove(enemy)
                 lasers.remove(laser)
-                score += 100
+                score += 50
+                # Создание взрыва на месте смерти врага
+                explosions.append({
+                    "frames": frames,
+                    "index": 0,
+                    "x": enemy.rect.centerx,
+                    "y": enemy.rect.centery,
+                    "timer": pygame.time.get_ticks()
+                })
                 break
-
-    # Проверка времени игры
-    elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
-    if elapsed_time >= 40:
-        running = False
 
     # Проверка хп
     if ship.current_hp <= 0:
         running = False
+        if draw_final_screen(screen, score, font, WIDTH, HEIGHT, BLACK, WHITE):
+            reset_game()
+            continue
 
     # Отрисовка объектов на экране
     screen.fill(BLACK)
@@ -229,6 +282,7 @@ while running:
         color = YELLOW if random.random() > 0.8 else WHITE
         pygame.draw.rect(screen, color, (star["x"], star["y"], 3, 3))
 
+    # Отрисовка объектов
     for laser in lasers:
         laser.draw(screen)
 
@@ -237,6 +291,22 @@ while running:
 
     for enemy in enemies:
         enemy.draw(screen)
+
+    for explosion in explosions[:]:
+        current_time = pygame.time.get_ticks()
+        elapsed_time = current_time - explosion["timer"]
+
+        # Скорость смены кадров
+        frame_duration = 50
+        frame_index = elapsed_time // frame_duration
+
+        if frame_index < len(explosion["frames"]):
+            # Отрисовываем текущий кадр взрыва
+            frame = explosion["frames"][frame_index]
+            screen.blit(frame, (explosion["x"] - frame.get_width() // 2, explosion["y"] - frame.get_height() // 2))
+        else:
+            # Удаляем взрыв
+            explosions.remove(explosion)
 
     # Отображение счета
     score_text = font.render(f"Score: {score}", True, WHITE)

@@ -1,6 +1,7 @@
-import pygame
-import sys
 import random
+import sys
+
+import pygame
 
 pygame.init()
 
@@ -22,6 +23,7 @@ stars = [
 STAR_SPEED = 3
 
 
+# Стартовый экран
 def display_start_screen(screen, WIDTH, HEIGHT):
     title_text = font.render("Spacewar", True, WHITE)
     instruction_text = font.render("Нажмите SPACE чтобы начать", True, WHITE)
@@ -60,6 +62,7 @@ def display_start_screen(screen, WIDTH, HEIGHT):
     pygame.time.Clock().tick(60)
 
 
+# Основной цикл
 waiting = True
 while waiting:
     for event in pygame.event.get():
@@ -74,4 +77,5 @@ while waiting:
     display_start_screen(screen, WIDTH, HEIGHT)
 
 import game
+
 game()
