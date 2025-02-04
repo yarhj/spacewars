@@ -17,7 +17,3 @@ def main():
                 sys.exit()
 
         pygame.display.flip()
-
-
-if __name__ == "__main__":
-    main_menu()

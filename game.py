@@ -29,12 +29,13 @@ stars = [
 STAR_SPEED = 2
 
 # Обработка гиф
-gif_path = ("sprites/explosion.gif")
+gif_path = "sprites/explosion.gif"
 gif = Image.open(gif_path)
 frames = []
 
 explosions = []
 
+# Разбивка гиф на кадры
 try:
     while True:
         frame = gif.convert("RGBA")
