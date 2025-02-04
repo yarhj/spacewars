@@ -77,5 +77,3 @@ while waiting:
     display_start_screen(screen, WIDTH, HEIGHT)
 
 import game
-
-game()
