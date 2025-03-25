@@ -1,15 +1,15 @@
 # spacewars
 pygame project
 
-#clone the repository:
+# clone the repository:
 https://github.com/yarhj/spacewars
 
-#activate the virtual environment:
+# activate the virtual environment:
 cd venv/Scripts/
 .\activate
 
-#install dependencies:
+# install dependencies:
 pip install -r requirements.txt
 
-#run programm:
+# run programm:
 python main.py
