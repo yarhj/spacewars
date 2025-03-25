@@ -11,5 +11,5 @@ cd venv/Scripts/
 # install dependencies:
 pip install -r requirements.txt
 
-# run programm:
+# run program:
 python main.py
